@@ -1,3 +1,7 @@
+import os
+
+os.system('pip install spotipy streamlit scikit-learn matplotlib streamlit-mic-recorder')
+
 import streamlit as st
 import pandas as pd
 import json
