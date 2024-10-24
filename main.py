@@ -23,23 +23,47 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=SPOTIPY_CLIENT_ID,
 
 @st.cache_data
 def load_data():
-    tracks_data = pd.read_csv('tracks.csv')
-    artists_data = pd.read_csv('artists.csv')
-    with open('dict_artists.json', 'r') as f:
-        dict_artists_data = json.load(f)
+    tracks_data_parts = []
+    for i in range(1, 16):
+        try:
+            part_data = pd.read_csv(f'data/tracks_part_{i}.csv')
+            tracks_data_parts.append(part_data)
+        except FileNotFoundError:
+            st.warning(f'File data/tracks_part_{i}.csv not found.')
 
+    tracks_data = pd.concat(tracks_data_parts, ignore_index=True) if tracks_data_parts else pd.DataFrame()
+
+    artists_data_parts = []
+    for i in range(1, 16):
+        try:
+            part_data = pd.read_csv(f'data/artists_part_{i}.csv')
+            artists_data_parts.append(part_data)
+        except FileNotFoundError:
+            st.warning(f'File data/artists_part_{i}.csv not found.')
+
+    artists_data = pd.concat(artists_data_parts, ignore_index=True) if artists_data_parts else pd.DataFrame()
+
+    dict_artists_data = {}
+    for i in range(1, 16):
+        try:
+            with open(f'data/dict_artists_part_{i}.json', 'r') as f:
+                dict_artists_data.update(json.load(f))
+        except FileNotFoundError:
+            st.warning(f'File data/dict_artists_part_{i}.json not found.')
     selected_columns = ['name', 'artists', 'danceability', 'energy', 'popularity', 'acousticness', 'valence']
-    tracks_data = tracks_data[selected_columns]
-    tracks_data.dropna(inplace=True)
-
-    scaler = StandardScaler()
-    tracks_data[['danceability', 'energy', 'popularity', 'acousticness', 'valence']] = scaler.fit_transform(
-        tracks_data[['danceability', 'energy', 'popularity', 'acousticness', 'valence']]
-    )
+    if not tracks_data.empty:
+        tracks_data = tracks_data[selected_columns]
+        tracks_data.dropna(inplace=True)
+        scaler = StandardScaler()
+        tracks_data[['danceability', 'energy', 'popularity', 'acousticness', 'valence']] = scaler.fit_transform(
+            tracks_data[['danceability', 'energy', 'popularity', 'acousticness', 'valence']]
+        )
+    else:
+        scaler = None
 
     return tracks_data, artists_data, dict_artists_data, scaler
-
 tracks_data, artists_data, dict_artists_data, scaler = load_data()
+
 
 def find_similar_songs(song_or_artist, data, energy_level=None, top_n=10):
     song_or_artist = song_or_artist.lower()
@@ -171,4 +195,4 @@ if recommend_btn and st.session_state.user_input:
                 st.write(f"Genre: {', '.join(song['genre']) if song['genre'] else 'N/A'}")
                 st.write(f"[Listen on Spotify]({song['url']})")
 
-st.markdown("Made with ❤️ by Exun")
+st.markdown("Made with ❤️ by Chaitanya")

@@ -1,3 +1,0 @@
-from neuralintents import GenericAssistant
-import speech_recognition
-
